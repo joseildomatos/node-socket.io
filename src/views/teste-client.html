@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+
+<head>
+
+    <script src="http://localhost:3300/socket.io/socket.io.js"></script>
+
+    <!-- pegando a dependência do servidor -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/css/materialize.min.css">
+    <!--<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.1/jquery.min.js"></script>-->
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/js/materialize.min.js"></script>
+
+    <title>Socket.IO SCMM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        form {
+            padding: 103, 103, 103, 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        form input {
+            border: 0;
+            padding: 10px;
+            width: 90%;
+            margin-right: .5%;
+        }
+
+        form button {
+            width: 9%;
+            background: rgb(130, 224, 255);
+            border: none;
+            padding: 10px;
+        }
+
+        #lista_mesagens {
+            list-style-type: none;
+            margin: 10px;
+            padding: 0;
+        }
+
+        #lista_mesagens li {
+            padding: 5px 10px;
+        }
+
+        #lista_mesagens li:nth-child(odd) {
+            background: #eee;
+        }
+
+        #divContent {
+            overflow: auto;
+            height: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="light-blue lighten-1">
+        <div class="nav-wrapper">
+            <a class="brand-logo center">SCMM - Tempo real</a>
+        </div>
+    </nav>
+    <div id="divContent">
+        <ul id="lista_mesagens"></ul>
+    </div>
+
+    <form action="" style="background-color:  antiquewhite">
+        <div class="row col s6" style="margin-bottom: 0px;">
+            <div class="col s12 input-field">
+                <i class="material-icons prefix">textsms</i>
+                <input type="text" id="texto" required value="" autocomplete="off">
+                <label for="texto">Mensagem SCMM</label>
+                <!--data-error="Informações inválidas!" data-success="Dados digitados corretamente"-->
+                <div class="row">
+                    <button class="btn waves-effect waves-light pulse" type="submit" name="action">Enviar
+                        <i id="id_icon_send" class="material-icons right">send</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script>
+
+        var socket = io.connect('http://localhost:3300', { query: { usuario: 'joseildo8538_html' + Date.now().toString() } })
+        // irei utilizar futuramente para conversas em tempo real
+        $("#texto").keyup((e) => {
+            if (e.keyCode != 13) {
+                if ($("#texto").val()) {
+                    socket.emit('escrevendo', "Estão digitando...");
+                } else {
+                    socket.emit('escrevendo', '');
+                }
+            } else {
+                socket.emit('escrevendo', '');
+            }
+        });
+        // evento do botao ENVIAR MENSAGEM
+        $('form').submit((e) => {
+            e.preventDefault();
+            socket.emit('MonitorMensageiro', $('#texto').val());
+            $('#texto').val('');
+        })
+
+        socket.on('connect', (io) => {
+            $('#divContent').animate({ scrollTop: 9999999 }, 50);
+            $('#lista_mesagens').append($('<li>').text("Conected"));
+
+            socket.emit('MonitorMensageiro', 'Conected');
+
+            socket.on('EmailSocket', (msg) => {
+                //x = JSON.stringify(msg).toLowerCase().indexOf('"ds_rotina":"mensageiro"');
+                //if (x != -1) {
+                //    alert("Msg cmo IF especifico para identificar a rotina => " + msg.ds_rotina);
+                //}
+                $('#divContent').animate({ scrollTop: 9999999 }, 50);
+                $('#lista_mesagens').append($('<li>').text(JSON.stringify(msg)));
+            });
+
+            socket.on('MonitorMensageiro', (msg) => {
+                //x = JSON.stringify(msg).toLowerCase().indexOf('"ds_rotina":"mensageiro"');
+                //if (x != -1) {
+                //    alert("Msg cmo IF especifico para identificar a rotina => " + msg.ds_rotina);
+                //}
+                $('#divContent').animate({ scrollTop: 9999999 }, 50);
+                $('#lista_mesagens').append($('<li>').text(JSON.stringify(msg)));
+            });
+            socket.on('disconnect', () => {
+                //alert('disconnected');
+                socket.emit('MonitorMensageiro', { conteudo: 'desconectou html' });
+            });
+        });
+
+
+    </script>
+
+</body>
+
+</html>
